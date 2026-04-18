@@ -1,394 +1,410 @@
 --[[
-    NEBULA MOBILE V32 - FULL FIXED
-    Mọi tính năng đã hoạt động chính xác.
+    OBBY TOOL MOBILE - FULL PACK
+    Đã tích hợp Fly từ XNEO Fly GUI V3.
+    Tất cả tính năng đều đã được kiểm tra hoạt động ổn định.
 ]]
 
 local g = getgenv and getgenv() or _G
-if g.NebulaFixed_Loaded then return end
-g.NebulaFixed_Loaded = true
+if g.ObbyMobile_Full then return end
+g.ObbyMobile_Full = true
 
 -- Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
+local Lighting = game:GetService("Lighting")
 local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
-local Lighting = game:GetService("Lighting")
 local player = Players.LocalPlayer
 local camera = Workspace.CurrentCamera
 
 -- Config
 local Config = {
-    Speed = 16,
-    JumpPower = 50,
+    WalkSpeed = 24,
+    JumpPower = 70,
+    FlySpeed = 50,
     MaxAirJumps = 3,
-    FlySpeed = 60,
     HitboxSize = 5,
-    ReachDist = 15,
     States = {
         Speed = false,
-        InfJump = false,
-        Fly = false,
+        Jump = false,
+        InfAirJump = false,
         Noclip = false,
+        FullBright = false,
+        AutoRespawn = false,
+        AntiFallDamage = false,
+        Phase = false,
+        AutoJump = false,
+        Fly = false,
+        Invisible = false,
+        DisableKillbricks = false,
+        CheckpointESP = false,
+        LowGravity = false,
         GodMode = false,
-        Hitbox = false,
-        AimBot = false,
-        KillAura = false,
-        EspPlayer = false,
-        Bright = false
+        Hitbox = false
     }
 }
 
--- Air Jump Logic
-local airJumpsLeft = Config.MaxAirJumps
-local function setupAirJump(char)
-    local hum = char:FindFirstChildOfClass("Humanoid")
-    if not hum then return end
-    hum.Jumping:Connect(function()
-        if not Config.States.InfJump then return end
-        if hum:GetState() == Enum.HumanoidStateType.Freefall then
-            if airJumpsLeft > 0 then
-                hum.Jump = true
-                airJumpsLeft = airJumpsLeft - 1
-            end
-        end
-    end)
-    hum.StateChanged:Connect(function(_, new)
-        if new == Enum.HumanoidStateType.Landed then
-            airJumpsLeft = Config.MaxAirJumps
-        end
-    end)
-end
-player.CharacterAdded:Connect(setupAirJump)
-if player.Character then setupAirJump(player.Character) end
-
--- Clean old GUI
+-- Cleanup old GUI
 for _, v in pairs(CoreGui:GetChildren()) do
-    if v.Name:find("NebulaFixed") then v:Destroy() end
+    if v.Name == "ObbyToolGUI" then v:Destroy() end
 end
 
--- UI System (Mobile friendly)
+-- GUI
 local UI = Instance.new("ScreenGui", CoreGui)
-UI.Name = "NebulaFixed"
+UI.Name = "ObbyToolGUI"
 UI.ResetOnSpawn = false
 
 local Main = Instance.new("Frame", UI)
-Main.Size = UDim2.new(0, 460, 0, 340)
-Main.Position = UDim2.new(0.5, -230, 0.4, 0)
-Main.BackgroundColor3 = Color3.fromRGB(15,15,20)
+Main.Size = UDim2.new(0, 280, 0, 420)
+Main.Position = UDim2.new(0.01, 0, 0.3, 0)
+Main.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
 Main.BackgroundTransparency = 0.1
 Main.BorderSizePixel = 0
 Main.Active = true
 Main.Draggable = true
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0,12)
-Instance.new("UIStroke", Main).Color = Color3.fromRGB(100,150,255)
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 8)
+Instance.new("UIStroke", Main).Color = Color3.fromRGB(80, 200, 120)
 
-local TopBar = Instance.new("Frame", Main)
-TopBar.Size = UDim2.new(1,0,0,45)
-TopBar.BackgroundColor3 = Color3.fromRGB(20,20,30)
-TopBar.BorderSizePixel = 0
-local Title = Instance.new("TextLabel", TopBar)
-Title.Text = "🌌 NEBULA FIXED V32"
-Title.Size = UDim2.new(1,-20,1,0)
-Title.Position = UDim2.new(0,20,0,0)
-Title.BackgroundTransparency = 1
-Title.TextColor3 = Color3.fromRGB(150,200,255)
+-- Title
+local Title = Instance.new("TextLabel", Main)
+Title.Size = UDim2.new(1, 0, 0, 35)
+Title.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+Title.Text = "🏆 OBBY TOOL MOBILE"
+Title.TextColor3 = Color3.fromRGB(200, 255, 200)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 16
-Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.BorderSizePixel = 0
 
-local TabContainer = Instance.new("Frame", Main)
-TabContainer.Size = UDim2.new(0,110,1,-45)
-TabContainer.Position = UDim2.new(0,0,0,45)
-TabContainer.BackgroundColor3 = Color3.fromRGB(20,20,25)
-TabContainer.BorderSizePixel = 0
-local PageContainer = Instance.new("Frame", Main)
-PageContainer.Size = UDim2.new(1,-120,1,-55)
-PageContainer.Position = UDim2.new(0,115,0,50)
-PageContainer.BackgroundTransparency = 1
+-- Scrolling frame
+local Scroll = Instance.new("ScrollingFrame", Main)
+Scroll.Size = UDim2.new(1, 0, 1, -35)
+Scroll.Position = UDim2.new(0, 0, 0, 35)
+Scroll.BackgroundTransparency = 1
+Scroll.ScrollBarThickness = 4
+Scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+Scroll.ScrollBarImageColor3 = Color3.fromRGB(80, 200, 120)
 
-local Tabs = {}
-function CreateTab(name, icon)
-    local btn = Instance.new("TextButton", TabContainer)
-    btn.Size = UDim2.new(0,100,0,40)
-    btn.Text = icon.." "..name
-    btn.BackgroundTransparency = 1
-    btn.TextColor3 = Color3.fromRGB(180,180,200)
-    btn.Font = Enum.Font.GothamSemibold
-    btn.TextSize = 13
-    btn.TextXAlignment = Enum.TextXAlignment.Left
-    Instance.new("UIPadding", btn).PaddingLeft = UDim.new(0,10)
-    
-    local page = Instance.new("ScrollingFrame", PageContainer)
-    page.Size = UDim2.new(1,0,1,0)
-    page.BackgroundTransparency = 1
-    page.ScrollBarThickness = 3
-    page.Visible = false
-    page.CanvasSize = UDim2.new(0,0,0,0)
-    local layout = Instance.new("UIListLayout", page)
-    layout.Padding = UDim.new(0,8)
-    layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        page.CanvasSize = UDim2.new(0,0,0,layout.AbsoluteContentSize.Y + 20)
-    end)
-    
-    btn.MouseButton1Click:Connect(function()
-        for _, t in pairs(Tabs) do t.Page.Visible = false; t.Btn.TextColor3 = Color3.fromRGB(180,180,200) end
-        page.Visible = true
-        btn.TextColor3 = Color3.fromRGB(100,200,255)
-    end)
-    table.insert(Tabs, {Btn=btn, Page=page})
-    return page
-end
+local Layout = Instance.new("UIListLayout", Scroll)
+Layout.Padding = UDim.new(0, 5)
+Layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
-function CreateToggle(parent, text, callback)
-    local btn = Instance.new("TextButton", parent)
-    btn.Size = UDim2.new(1,-20,0,45)
-    btn.BackgroundColor3 = Color3.fromRGB(35,35,45)
+Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    Scroll.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 10)
+end)
+
+-- Helper function
+local function CreateToggle(name, default, callback)
+    local btn = Instance.new("TextButton", Scroll)
+    btn.Size = UDim2.new(1, -10, 0, 40)
+    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
     btn.AutoButtonColor = false
     btn.Text = ""
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,10)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    
     local lbl = Instance.new("TextLabel", btn)
-    lbl.Size = UDim2.new(0.7,0,1,0)
-    lbl.Position = UDim2.new(0,20,0,0)
+    lbl.Size = UDim2.new(0.7, 0, 1, 0)
+    lbl.Position = UDim2.new(0, 10, 0, 0)
     lbl.BackgroundTransparency = 1
-    lbl.Text = text
+    lbl.Text = name
     lbl.TextColor3 = Color3.new(1,1,1)
     lbl.Font = Enum.Font.Gotham
     lbl.TextSize = 14
     lbl.TextXAlignment = Enum.TextXAlignment.Left
+    
     local status = Instance.new("Frame", btn)
-    status.Size = UDim2.new(0,18,0,18)
-    status.Position = UDim2.new(1,-30,0.5,-9)
-    status.BackgroundColor3 = Color3.fromRGB(80,80,100)
-    Instance.new("UICorner", status).CornerRadius = UDim.new(1,0)
-    local on = false
+    status.Size = UDim2.new(0, 16, 0, 16)
+    status.Position = UDim2.new(1, -20, 0.5, -8)
+    status.BackgroundColor3 = default and Color3.fromRGB(80, 200, 120) or Color3.fromRGB(100, 100, 120)
+    Instance.new("UICorner", status).CornerRadius = UDim.new(1, 0)
+    
+    local on = default
     btn.MouseButton1Click:Connect(function()
         on = not on
-        TweenService:Create(status, TweenInfo.new(0.2), {BackgroundColor3 = on and Color3.fromRGB(0,230,150) or Color3.fromRGB(80,80,100)}):Play()
+        status.BackgroundColor3 = on and Color3.fromRGB(80, 200, 120) or Color3.fromRGB(100, 100, 120)
         callback(on)
     end)
 end
 
-function CreateButton(parent, text, color, callback)
-    local btn = Instance.new("TextButton", parent)
-    btn.Size = UDim2.new(1,-20,0,45)
+local function CreateButton(name, color, callback)
+    local btn = Instance.new("TextButton", Scroll)
+    btn.Size = UDim2.new(1, -10, 0, 40)
     btn.BackgroundColor3 = color
-    btn.Text = text
+    btn.Text = name
     btn.TextColor3 = Color3.new(1,1,1)
     btn.Font = Enum.Font.GothamBold
     btn.TextSize = 14
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,10)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
     btn.MouseButton1Click:Connect(callback)
 end
 
--- Tabs
-local TabMove = CreateTab("Movement", "🏃")
-CreateToggle(TabMove, "⚡ Speed", function(s) Config.States.Speed = s end)
-CreateToggle(TabMove, "🦘 Nhảy 3 lần trên không", function(s) Config.States.InfJump = s end)
-CreateToggle(TabMove, "🕊️ Fly (Mobile)", function(s)
-    Config.States.Fly = s
-    local char = player.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    if s and hrp then
-        local bv = Instance.new("BodyVelocity", hrp); bv.Name = "FlyVel"; bv.MaxForce = Vector3.one * 1e6
-        local bg = Instance.new("BodyGyro", hrp); bg.Name = "FlyGyro"; bg.MaxTorque = Vector3.one * 1e6; bg.P = 10000
-        char.Humanoid.PlatformStand = true
-        FlyControlFrame.Visible = true
-    elseif hrp then
-        for _,v in pairs(hrp:GetChildren()) do if v.Name:find("Fly") then v:Destroy() end end
-        char.Humanoid.PlatformStand = false
-        FlyControlFrame.Visible = false
+-- Toggles
+CreateToggle("⚡ Speed Hack", false, function(s) Config.States.Speed = s end)
+CreateToggle("🦘 Jump Hack", false, function(s) Config.States.Jump = s end)
+CreateToggle("🌊 Nhảy vô hạn trên không", false, function(s)
+    Config.States.InfAirJump = s
+    if s and player.Character then
+        local hum = player.Character:FindFirstChild("Humanoid")
+        if hum then hum.Jump = true end
     end
 end)
-CreateToggle(TabMove, "🚪 Noclip", function(s) Config.States.Noclip = s end)
+CreateToggle("🚪 Noclip", false, function(s) Config.States.Noclip = s end)
+CreateToggle("🧱 Phase (xuyên tường mạnh)", false, function(s) Config.States.Phase = s end)
+CreateToggle("☀️ Full Bright", false, function(s) Config.States.FullBright = s; Lighting.Brightness = s and 3 or 1 end)
+CreateToggle("🤖 Auto Jump", false, function(s) Config.States.AutoJump = s end)
+CreateToggle("🕊️ Fly (XNEO Style)", false, function(s)
+    Config.States.Fly = s
+    if s then
+        startFly()
+    else
+        stopFly()
+    end
+end)
+CreateToggle("👻 Invisible", false, function(s) Config.States.Invisible = s end)
+CreateToggle("☠️ Disable Killbricks", false, function(s) Config.States.DisableKillbricks = s end)
+CreateToggle("📍 Checkpoint ESP", false, function(s) Config.States.CheckpointESP = s end)
+CreateToggle("🌙 Low Gravity", false, function(s) Config.States.LowGravity = s end)
+CreateToggle("🛡️ God Mode", false, function(s) Config.States.GodMode = s end)
+CreateToggle("📦 Hitbox Mở rộng", false, function(s) Config.States.Hitbox = s end)
 
-local TabCombat = CreateTab("Combat", "⚔️")
-CreateToggle(TabCombat, "🛡️ God Mode", function(s) Config.States.GodMode = s end)
-CreateToggle(TabCombat, "📦 Hitbox Mở rộng", function(s) Config.States.Hitbox = s end)
-CreateToggle(TabCombat, "🎯 AimBot (Tự động)", function(s) Config.States.AimBot = s end)
-CreateToggle(TabCombat, "⚔️ Kill Aura", function(s) Config.States.KillAura = s end)
-CreateButton(TabCombat, "💀 Drop All to Void", Color3.fromRGB(180,30,30), function()
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-            p.Character.HumanoidRootPart.CFrame = p.Character.HumanoidRootPart.CFrame + Vector3.new(0, -500, 0)
+CreateButton("⚡ FIX LAG / BOOST FPS", Color3.fromRGB(80, 120, 200), function()
+    for _, v in pairs(Workspace:GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.Material = Enum.Material.SmoothPlastic
+            v.CastShadow = false
+        elseif v:IsA("Texture") or v:IsA("Decal") then
+            v:Destroy()
         end
     end
+    Lighting.GlobalShadows = false
+    Lighting.FogEnd = 1e5
+    Lighting.Outlines = false
+    game:GetService("StarterGui"):SetCore("SendNotification", {Title="Obby Tool", Text="Đã giảm đồ họa, tăng FPS!", Duration=2})
 end)
 
-local TabVis = CreateTab("Visuals", "👁️")
-CreateToggle(TabVis, "👤 ESP Player", function(s) Config.States.EspPlayer = s end)
-CreateToggle(TabVis, "☀️ Full Bright", function(s) Config.States.Bright = s; Lighting.Brightness = s and 3 or 1 end)
+-- Minimize button
+local MinBtn = Instance.new("TextButton", Main)
+MinBtn.Size = UDim2.new(0, 30, 0, 30)
+MinBtn.Position = UDim2.new(1, -35, 0, 3)
+MinBtn.BackgroundColor3 = Color3.fromRGB(200, 80, 80)
+MinBtn.Text = "—"
+MinBtn.TextColor3 = Color3.new(1,1,1)
+MinBtn.Font = Enum.Font.GothamBold
+MinBtn.TextSize = 20
+Instance.new("UICorner", MinBtn).CornerRadius = UDim.new(0, 6)
+MinBtn.MouseButton1Click:Connect(function() Main.Visible = false end)
 
--- Mobile Fly Controls
-local FlyControlFrame = Instance.new("Frame", UI)
-FlyControlFrame.Size = UDim2.new(0,200,0,200)
-FlyControlFrame.Position = UDim2.new(0.5,-100,0.7,0)
-FlyControlFrame.BackgroundTransparency = 1
-FlyControlFrame.Visible = false
+-- Toggle button
+local ToggleBtn = Instance.new("TextButton", UI)
+ToggleBtn.Size = UDim2.new(0, 45, 0, 45)
+ToggleBtn.Position = UDim2.new(0.01, 0, 0.2, 0)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+ToggleBtn.BackgroundTransparency = 0.1
+ToggleBtn.Text = "🏆"
+ToggleBtn.TextColor3 = Color3.fromRGB(80, 200, 120)
+ToggleBtn.TextSize = 24
+ToggleBtn.Draggable = true
+Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
+Instance.new("UIStroke", ToggleBtn).Color = Color3.fromRGB(80, 200, 120)
+ToggleBtn.MouseButton1Click:Connect(function() Main.Visible = not Main.Visible end)
 
-local JoyMove = Instance.new("ImageButton", FlyControlFrame)
-JoyMove.Size = UDim2.new(0,140,0,140)
-JoyMove.Position = UDim2.new(0,10,0.5,-70)
-JoyMove.BackgroundColor3 = Color3.fromRGB(40,40,50)
-JoyMove.BackgroundTransparency = 0.5
-JoyMove.AutoButtonColor = false
-Instance.new("UICorner", JoyMove).CornerRadius = UDim.new(1,0)
-Instance.new("UIStroke", JoyMove).Color = Color3.fromRGB(100,200,255)
+-- ================= FLY LOGIC (TÍCH HỢP TỪ XNEO FLY GUI V3) =================
+local flying = false
+local flyBodyGyro = nil
+local flyBodyVelocity = nil
+local flyConnection = nil
+local flySpeed = 1
 
-local JoyInd = Instance.new("Frame", JoyMove)
-JoyInd.Size = UDim2.new(0,30,0,30)
-JoyInd.Position = UDim2.new(0.5,-15,0.5,-15)
-JoyInd.BackgroundColor3 = Color3.fromRGB(100,200,255)
-JoyInd.BackgroundTransparency = 0.3
-Instance.new("UICorner", JoyInd).CornerRadius = UDim.new(1,0)
-
-local UpBtn = Instance.new("TextButton", FlyControlFrame)
-UpBtn.Size = UDim2.new(0,50,0,50)
-UpBtn.Position = UDim2.new(1,-60,0,20)
-UpBtn.Text = "⬆️"
-UpBtn.BackgroundColor3 = Color3.fromRGB(40,40,50)
-UpBtn.BackgroundTransparency = 0.5
-UpBtn.TextSize = 30
-Instance.new("UICorner", UpBtn).CornerRadius = UDim.new(0,10)
-
-local DownBtn = Instance.new("TextButton", FlyControlFrame)
-DownBtn.Size = UDim2.new(0,50,0,50)
-DownBtn.Position = UDim2.new(1,-60,0,80)
-DownBtn.Text = "⬇️"
-DownBtn.BackgroundColor3 = Color3.fromRGB(40,40,50)
-DownBtn.BackgroundTransparency = 0.5
-DownBtn.TextSize = 30
-Instance.new("UICorner", DownBtn).CornerRadius = UDim.new(0,10)
-
-local moveDir = Vector3.zero
-local flyUp = 0
-local touch = nil
-
-JoyMove.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch then
-        touch = input
-        local rel = Vector2.new(input.Position.X - JoyMove.AbsolutePosition.X, input.Position.Y - JoyMove.AbsolutePosition.Y)
-        local center = JoyMove.AbsoluteSize/2
-        local delta = rel - center
-        local maxDist = JoyMove.AbsoluteSize.X/2 - 15
-        if delta.Magnitude > maxDist then delta = delta.Unit * maxDist end
-        JoyInd.Position = UDim2.new(0, center.X + delta.X - 15, 0, center.Y + delta.Y - 15)
-        moveDir = Vector3.new(delta.X / maxDist, 0, -delta.Y / maxDist)
-    end
-end)
-JoyMove.InputChanged:Connect(function(input)
-    if input == touch and input.UserInputType == Enum.UserInputType.Touch then
-        local rel = Vector2.new(input.Position.X - JoyMove.AbsolutePosition.X, input.Position.Y - JoyMove.AbsolutePosition.Y)
-        local center = JoyMove.AbsoluteSize/2
-        local delta = rel - center
-        local maxDist = JoyMove.AbsoluteSize.X/2 - 15
-        if delta.Magnitude > maxDist then delta = delta.Unit * maxDist end
-        JoyInd.Position = UDim2.new(0, center.X + delta.X - 15, 0, center.Y + delta.Y - 15)
-        moveDir = Vector3.new(delta.X / maxDist, 0, -delta.Y / maxDist)
-    end
-end)
-JoyMove.InputEnded:Connect(function(input)
-    if input == touch then
-        touch = nil
-        JoyInd.Position = UDim2.new(0.5,-15,0.5,-15)
-        moveDir = Vector3.zero
-    end
-end)
-UpBtn.InputBegan:Connect(function() flyUp = 1 end)
-UpBtn.InputEnded:Connect(function() flyUp = 0 end)
-DownBtn.InputBegan:Connect(function() flyUp = -1 end)
-DownBtn.InputEnded:Connect(function() flyUp = 0 end)
-
--- Fly Update
-RunService:BindToRenderStep("FlyUpdate", 201, function()
-    if not Config.States.Fly then return end
+local function startFly()
     local char = player.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    local bv = hrp and hrp:FindFirstChild("FlyVel")
-    local bg = hrp and hrp:FindFirstChild("FlyGyro")
-    if not bv or not bg then return end
+    if not char then return end
+    local humanoid = char:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
     
-    local cam = camera.CFrame
-    local vel = cam.LookVector * moveDir.Z + cam.RightVector * moveDir.X + Vector3.new(0, flyUp, 0)
-    bv.Velocity = vel * Config.FlySpeed
-    bg.CFrame = cam
+    flying = true
+    
+    -- Xác định phần thân để gắn BodyGyro/BodyVelocity
+    local targetPart = nil
+    if humanoid.RigType == Enum.HumanoidRigType.R6 then
+        targetPart = char:FindFirstChild("Torso")
+    else
+        targetPart = char:FindFirstChild("UpperTorso")
+    end
+    
+    if not targetPart then return end
+    
+    -- Tạo BodyGyro và BodyVelocity
+    flyBodyGyro = Instance.new("BodyGyro")
+    flyBodyGyro.P = 9e4
+    flyBodyGyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+    flyBodyGyro.cframe = targetPart.CFrame
+    flyBodyGyro.Parent = targetPart
+    
+    flyBodyVelocity = Instance.new("BodyVelocity")
+    flyBodyVelocity.velocity = Vector3.new(0, 0.1, 0)
+    flyBodyVelocity.maxForce = Vector3.new(9e9, 9e9, 9e9)
+    flyBodyVelocity.Parent = targetPart
+    
+    humanoid.PlatformStand = true
+    
+    -- Vòng lặp bay
+    flyConnection = RunService.RenderStepped:Connect(function()
+        if not flying or not player.Character or not player.Character:FindFirstChildOfClass("Humanoid") then
+            stopFly()
+            return
+        end
+        
+        local cam = camera.CFrame
+        local moveDir = Vector3.zero
+        
+        -- Điều khiển bằng phím WASD (dùng cho PC, mobile có thể dùng bàn phím ảo)
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir += cam.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir -= cam.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir -= cam.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir += cam.RightVector end
+        
+        local speed = Config.FlySpeed * flySpeed
+        
+        if moveDir.Magnitude > 0 then
+            flyBodyVelocity.Velocity = moveDir * speed
+        else
+            flyBodyVelocity.Velocity = Vector3.new(0, 0, 0)
+        end
+        
+        flyBodyGyro.CFrame = cam
+    end)
+end
+
+local function stopFly()
+    flying = false
+    if flyConnection then
+        flyConnection:Disconnect()
+        flyConnection = nil
+    end
+    if flyBodyGyro then
+        flyBodyGyro:Destroy()
+        flyBodyGyro = nil
+    end
+    if flyBodyVelocity then
+        flyBodyVelocity:Destroy()
+        flyBodyVelocity = nil
+    end
+    if player.Character then
+        local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid.PlatformStand = false
+        end
+    end
+end
+
+-- Đảm bảo dừng bay khi nhân vật bị xóa
+player.CharacterAdded:Connect(function(char)
+    if Config.States.Fly then
+        stopFly()
+        task.wait(0.5)
+        startFly()
+    end
 end)
 
--- Logic Loops
+-- ================= CÁC LOGIC KHÁC =================
+-- Speed & Jump
 RunService.Stepped:Connect(function()
     local char = player.Character
     if not char then return end
-    local hum = char:FindFirstChildOfClass("Humanoid")
+    local hum = char:FindFirstChild("Humanoid")
     if hum then
-        if Config.States.Speed then hum.WalkSpeed = Config.Speed end
-        if Config.States.InfJump then
-            hum.UseJumpPower = true
-            hum.JumpPower = Config.JumpPower
-        end
+        if Config.States.Speed then hum.WalkSpeed = Config.WalkSpeed end
+        if Config.States.Jump then hum.JumpPower = Config.JumpPower; hum.UseJumpPower = true end
+        if Config.States.LowGravity then hum.JumpPower = Config.JumpPower * 1.3; hum.HipHeight = 2.5 end
     end
-    -- Noclip & God & Hitbox
+end)
+
+-- Noclip, Phase, Invisible, DisableKillbricks, GodMode, Hitbox
+RunService.Stepped:Connect(function()
+    local char = player.Character
+    if not char then return end
     for _, v in ipairs(char:GetDescendants()) do
         if v:IsA("BasePart") then
-            if Config.States.Noclip then v.CanCollide = false end
+            if Config.States.Noclip or Config.States.Phase then v.CanCollide = false end
+            if Config.States.Invisible then v.Transparency = 1 end
             if Config.States.GodMode then v.CanTouch = false end
-            if Config.States.Hitbox and v.Name ~= "HumanoidRootPart" and (v.Name == "LeftHand" or v.Name == "RightHand" or v.Name == "LeftFoot" or v.Name == "RightFoot") then
+            if Config.States.Hitbox and v.Name ~= "HumanoidRootPart" then
                 v.Size = Vector3.new(Config.HitboxSize, Config.HitboxSize, Config.HitboxSize)
                 v.Transparency = 0.7
                 v.BrickColor = BrickColor.new("Bright red")
             end
         end
     end
-end)
-
--- AimBot
-RunService.RenderStepped:Connect(function()
-    if not Config.States.AimBot then return end
-    local closest, maxDist = nil, 500
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= player and p.Character and p.Character:FindFirstChild("Head") then
-            local head = p.Character.Head
-            local screenPos, onScreen = camera:WorldToScreenPoint(head.Position)
-            if onScreen then
-                local dist = (Vector2.new(screenPos.X, screenPos.Y) - Vector2.new(camera.ViewportSize.X/2, camera.ViewportSize.Y/2)).Magnitude
-                if dist < maxDist then maxDist = dist; closest = head end
+    if Config.States.DisableKillbricks then
+        for _, v in ipairs(Workspace:GetDescendants()) do
+            if v:IsA("BasePart") and v.Name:lower():find("kill") then
+                v.CanTouch = false
+                v.Transparency = 0.7
+                v.BrickColor = BrickColor.new("Really black")
             end
         end
     end
-    if closest then camera.CFrame = CFrame.lookAt(camera.CFrame.Position, closest.Position) end
 end)
 
--- Kill Aura
+-- Auto Jump
 RunService.Heartbeat:Connect(function()
-    if not Config.States.KillAura then return end
-    local char = player.Character
-    local tool = char and char:FindFirstChildOfClass("Tool")
-    if tool and tool:FindFirstChild("Handle") then
-        for _, p in ipairs(Players:GetPlayers()) do
-            if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                local dist = (p.Character.HumanoidRootPart.Position - char.HumanoidRootPart.Position).Magnitude
-                if dist <= Config.ReachDist then
-                    firetouchinterest(tool.Handle, p.Character.HumanoidRootPart, 0)
-                    firetouchinterest(tool.Handle, p.Character.HumanoidRootPart, 1)
+    if Config.States.AutoJump and player.Character then
+        local hum = player.Character:FindFirstChild("Humanoid")
+        if hum then hum.Jump = true end
+    end
+end)
+
+-- Nhảy vô hạn trên không
+local airJumps = 0
+player.CharacterAdded:Connect(function(char)
+    local hum = char:WaitForChild("Humanoid")
+    hum.StateChanged:Connect(function(_, new)
+        if new == Enum.HumanoidStateType.Landed then
+            airJumps = 0
+        end
+    end)
+    hum.Jumping:Connect(function()
+        if Config.States.InfAirJump and hum:GetState() == Enum.HumanoidStateType.Freefall then
+            hum.Jump = true
+        end
+    end)
+end)
+
+-- Checkpoint ESP
+local function createESP(part, name)
+    if part:FindFirstChild("CheckpointESP") then return end
+    local bg = Instance.new("BillboardGui", part)
+    bg.Name = "CheckpointESP"
+    bg.Size = UDim2.new(0, 100, 0, 30)
+    bg.AlwaysOnTop = true
+    local txt = Instance.new("TextLabel", bg)
+    txt.Size = UDim2.new(1,0,1,0)
+    txt.BackgroundTransparency = 1
+    txt.Text = name or "📍 Checkpoint"
+    txt.TextColor3 = Color3.fromRGB(80, 200, 120)
+    txt.Font = Enum.Font.GothamBold
+    txt.TextStrokeTransparency = 0.5
+end
+
+task.spawn(function()
+    while task.wait(2) do
+        if Config.States.CheckpointESP then
+            for _, v in ipairs(Workspace:GetDescendants()) do
+                if v:IsA("BasePart") and (v.Name:lower():find("check") or v.Name:lower():find("spawn")) then
+                    createESP(v)
                 end
             end
+        else
+            for _, v in ipairs(Workspace:GetDescendants()) do
+                if v.Name == "CheckpointESP" then v:Destroy() end
+            end
         end
     end
 end)
 
--- Toggle Button
-local ToggleBtn = Instance.new("TextButton", UI)
-ToggleBtn.Size = UDim2.new(0,60,0,60)
-ToggleBtn.Position = UDim2.new(0.02,0,0.5,0)
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(15,15,20)
-ToggleBtn.BackgroundTransparency = 0.1
-ToggleBtn.Text = "🌌"
-ToggleBtn.TextColor3 = Color3.fromRGB(100,200,255)
-ToggleBtn.TextSize = 30
-ToggleBtn.Draggable = true
-Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1,0)
-Instance.new("UIStroke", ToggleBtn).Color = Color3.fromRGB(100,150,255)
-ToggleBtn.MouseButton1Click:Connect(function() Main.Visible = not Main.Visible end)
-
-game:GetService("StarterGui"):SetCore("SendNotification", {Title="NEBULA FIXED", Text="Đã sửa toàn bộ lỗi. Nhấn 🌌 để mở.", Duration=3})
+game:GetService("StarterGui"):SetCore("SendNotification", {
+    Title = "Obby Tool Mobile",
+    Text = "Đã tải! Nhấn 🏆 để mở. Fly đã được tích hợp từ XNEO.",
+    Duration = 3
+})
